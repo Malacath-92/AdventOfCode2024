@@ -1,2 +1,5 @@
 manim
 advent-of-code-data
+
+# Visualization only
+scipy

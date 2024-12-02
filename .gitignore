@@ -1,2 +1,11 @@
-venv/
+# Python byproducts
+__pycache__/
+
+# Mainly for launch.json, which contains API keys that should not be leaked
 .vscode/
+
+# Python Virtual Environment
+venv/
+
+# manim media output
+media/
