@@ -68,52 +68,41 @@ if cli.visualize:
                 f"[{mul_range.regs[0][0]}:{mul_range.regs[0][1]}]": manim.GREEN
                 for mul_range in mul_ranges
             }
-            bold_highlights = {
-                f"[{mul_range.regs[1][0]}:{mul_range.regs[1][1]}]": manim.BOLD
-                for mul_range in mul_ranges
-            }
-            bold_highlights.update(
-                {
-                    f"[{mul_range.regs[2][0]}:{mul_range.regs[2][1]}]": manim.BOLD
-                    for mul_range in mul_ranges
-                }
-            )
 
             raw_mul_highlights = {
                 f"[{raw_mul_range.regs[0][0]}:{raw_mul_range.regs[0][1]}]": manim.GREEN
                 for raw_mul_range in raw_mul_ranges
             }
-            raw_bold_highlights = {
-                f"[{raw_mul_range.regs[1][0]}:{raw_mul_range.regs[1][1]}]": manim.BOLD
-                for raw_mul_range in raw_mul_ranges
-            }
-            raw_bold_highlights.update(
-                {
-                    f"[{raw_mul_range.regs[2][0]}:{raw_mul_range.regs[2][1]}]": manim.BOLD
-                    for raw_mul_range in raw_mul_ranges
-                }
-            )
 
-            self.original_text = manim.Text(data)
-            self.highlight_text = manim.Text(data, t2c=disabled_highlights)
+            self.original_text = manim.Text(data, font="Cascadia Code")
+            self.highlight_text = manim.Text(
+                data, t2c=disabled_highlights, font="Cascadia Code"
+            )
             self.reduced_text = manim.Text(
-                reduced_data, t2c=mul_highlights, t2w=bold_highlights
+                reduced_data,
+                t2c=mul_highlights,
+                font="Cascadia Code",
             )
 
             self.raw_reduced_text = manim.Text(
-                raw_reduced_data, t2c=raw_mul_highlights, t2w=raw_bold_highlights
+                raw_reduced_data,
+                t2c=raw_mul_highlights,
+                font="Cascadia Code",
             )
-            self.raw_reduced_text.scale(2.0)
+            self.raw_reduced_text.scale(0.1)
             self.raw_reduced_text.align_on_border(manim.LEFT)
             self.raw_reduced_text.align_on_border(manim.DOWN)
 
             self.marker = manim.Arrow(start=manim.UP, end=manim.DOWN)
-            self.marker.align_on_border(manim.LEFT)
+            self.marker.set_x(
+                self.raw_reduced_text.get_x() - self.raw_reduced_text.width / 2
+            )
             self.marker.align_on_border(manim.DOWN, 1.85)
             self.marker.generate_target()
-            self.marker.target.align_on_border(manim.RIGHT)
+            self.marker.target.set_x(-self.marker.get_x())
 
             self.counter_visible = False
+            self.current_val = 0
 
             def make_text():
                 if self.counter_visible == False:
@@ -126,7 +115,8 @@ if cli.visualize:
                 text_w = self.original_text.width
                 mark_x = self.marker.get_x()
                 alpha = (mark_x - text_x + text_w / 2) / text_w
-                pos = int(alpha * len(raw_reduced_data))
+
+                pos = math.floor(alpha * len(raw_reduced_data))
                 sub_data = raw_reduced_data[:pos]
                 sub_instructions = [
                     map(int, inst) for inst in re.findall(mul_re, sub_data)
@@ -134,8 +124,11 @@ if cli.visualize:
                 partial_solution = [
                     reduce(mul, instruction) for instruction in sub_instructions
                 ]
+                sum_of_partial_solution = sum(partial_solution)
+                if self.current_val != sum_of_partial_solution:
+                    print(alpha, sub_data, "\n")
 
-                text = manim.Text(f"{sum(partial_solution)}")
+                text = manim.Text(f"{sum_of_partial_solution}")
                 text.scale(4.0)
                 text.align_on_border(manim.UP, 2)
                 return text
@@ -143,15 +136,17 @@ if cli.visualize:
             self.current_counter = manim.always_redraw(make_text)
 
             if cli.sample:
-                self.original_text.scale(0.5)
-                self.highlight_text.scale(0.5)
-                self.reduced_text.scale(0.5)
+                self.original_text.scale(0.4)
+                self.highlight_text.scale(0.4)
+                self.reduced_text.scale(0.4)
             else:
-                self.original_text.scale(0.25)
-                self.highlight_text.scale(0.25)
-                self.reduced_text.scale(0.25)
+                self.original_text.scale(0.255)
+                self.highlight_text.scale(0.255)
+                self.reduced_text.scale(0.255)
 
         def construct(self):
+            self.add(self.raw_reduced_text)
+
             self.play(manim.FadeIn(self.original_text))
             self.play(manim.Transform(self.original_text, self.highlight_text))
             self.play(manim.Transform(self.original_text, self.reduced_text))
@@ -170,7 +165,7 @@ if cli.visualize:
 
             self.counter_visible = True
 
-            run_time = 2 if cli.sample else 20
+            run_time = 2 if cli.sample else 14
             self.play(
                 manim.MoveToTarget(self.original_text),
                 manim.MoveToTarget(self.marker),
