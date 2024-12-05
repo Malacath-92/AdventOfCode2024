@@ -1,6 +1,7 @@
 import aocd
 import collections
 import itertools
+import functools
 
 import cli
 
@@ -60,19 +61,16 @@ right_order_middle_pages = [prod[len(prod) // 2] for prod in right_order_product
 print(f"Problem 1: {sum(right_order_middle_pages)}")
 
 
-def fix_if_wrong_order(production):
-    while True:
-        for i, [lhs, rhs] in enumerate(sliding_window(production, 2)):
-            rhs_rules = [right for [left, right] in order_rules if left == rhs]
-            if lhs in rhs_rules:
-                production[i], production[i + 1] = production[i + 1], production[i]
-                break
-        if is_right_order(production):
-            return production
+def fix_order(production):
+    def compare(lhs, rhs):
+        rhs_rules = [right for [left, right] in order_rules if left == rhs]
+        return -1 if lhs in rhs_rules else 1
+
+    return sorted(production, key=functools.cmp_to_key(compare))
 
 
 fixed_productions = [
-    fix_if_wrong_order(prod) for prod in productions if not is_right_order(prod)
+    fix_order(prod) for prod in productions if not is_right_order(prod)
 ]
 fixed_middle_pages = [prod[len(prod) // 2] for prod in fixed_productions]
 print(f"Problem 2: {sum(fixed_middle_pages)}")
