@@ -10,25 +10,30 @@ sample_data = (
 )
 data = sample_data if cli.sample else aocd.data
 
-instructions = [map(int, inst) for inst in re.findall(r"mul\((\d+),(\d+)\)", data)]
+dont_do_re = re.compile(r"(don't\(\)).*?(do\(\))")
+mul_re = re.compile(r"mul\((\d+),(\d+)\)")
+
+instructions = [map(int, inst) for inst in re.findall(mul_re, data)]
 multiplications = [reduce(mul, instruction) for instruction in instructions]
 print(f"Problem 1: {sum(multiplications)}")
 
-data = re.sub(r"(don't\(\)).*?(do\(\))", "", "".join(data.splitlines()))
+data = re.sub(dont_do_re, "", "".join(data.splitlines()))
 data = data.split("don't")[0]
-instructions = [map(int, inst) for inst in re.findall(r"mul\((\d+),(\d+)\)", data)]
+instructions = [map(int, inst) for inst in re.findall(mul_re, data)]
 multiplications = [reduce(mul, instruction) for instruction in instructions]
 print(f"Problem 2: {sum(multiplications)}")
 
 if cli.visualize:
     import manim
+    import math
     import pathlib
 
     data = sample_data if cli.sample else aocd.data
     data = "".join(data.splitlines())
+    data = data.replace("{", "<").replace("}", ">").replace(" ", "_")
     if not cli.sample:
-        data = data[: len(data) // 4]
-    reduced_data = re.sub(r"(don't\(\)).*?(do\(\))", "", data).split("don't")[0]
+        data = data[: len(data) // 4]  # Reduce data for the sake of rendering time
+    reduced_data = re.sub(dont_do_re, "", data).split("don't")[0]
 
     raw_data = data
     raw_reduced_data = reduced_data
@@ -46,14 +51,28 @@ if cli.visualize:
             ]
         )
 
-    dont_do_re = re.compile(
-        r"(d\n?o\n?n\n?'\n?t\n?\(\n?\)\n?).*?(d\n?o\n?\(\n?\)\n?)", re.DOTALL
-    )
-    mul_re = re.compile(r"m\n?u\n?l\n?\(\n?(\d*\n?\d*)\n?,\n?(\d*\n?\d*)\n?\)")
+    disabled_ranges = re.finditer(dont_do_re, raw_data)
+    mul_ranges = list(re.finditer(mul_re, raw_reduced_data))
 
-    disabled_ranges = re.finditer(dont_do_re, data)
-    mul_ranges = list(re.finditer(mul_re, reduced_data))
-    raw_mul_ranges = list(re.finditer(mul_re, raw_reduced_data))
+    class RawTex(manim.Tex):
+        def __init__(self, text, font=None, t2c=None):
+            tex = ""
+
+            if font is not None:
+                tex = r"\fontfamily{" + font + r"}" + "\n"
+
+            tex = r"\begin{verbatim}" "\n" + text + "\n" r"\end{verbatim}"
+
+            tex = tex.replace(r"{{", r"{ {").replace(r"}}", r"} }")
+
+            super().__init__(tex)
+
+            if t2c is not None:
+                ranges = [
+                    (list(map(int, r[1:-1].split(":"))), c) for r, c in t2c.items()
+                ]
+                for r, c in ranges:
+                    self[0][r[0] : r[1]].set_color(c)
 
     class InstructionsScene(manim.Scene):
         def __init__(self):
@@ -71,25 +90,23 @@ if cli.visualize:
 
             raw_mul_highlights = {
                 f"[{raw_mul_range.regs[0][0]}:{raw_mul_range.regs[0][1]}]": manim.GREEN
-                for raw_mul_range in raw_mul_ranges
+                for raw_mul_range in mul_ranges
             }
 
-            self.original_text = manim.Text(data, font="Cascadia Code")
-            self.highlight_text = manim.Text(
-                data, t2c=disabled_highlights, font="Cascadia Code"
-            )
-            self.reduced_text = manim.Text(
+            self.original_text = RawTex(data)
+            self.highlight_text = RawTex(data, t2c=disabled_highlights)
+            self.reduced_text = RawTex(
                 reduced_data,
                 t2c=mul_highlights,
                 font="Cascadia Code",
             )
 
-            self.raw_reduced_text = manim.Text(
+            self.raw_reduced_text = RawTex(
                 raw_reduced_data,
                 t2c=raw_mul_highlights,
                 font="Cascadia Code",
             )
-            self.raw_reduced_text.scale(0.1)
+            self.raw_reduced_text.scale(2.0)
             self.raw_reduced_text.align_on_border(manim.LEFT)
             self.raw_reduced_text.align_on_border(manim.DOWN)
 
@@ -102,9 +119,8 @@ if cli.visualize:
             self.marker.target.set_x(-self.marker.get_x())
 
             self.counter_visible = False
-            self.current_val = 0
 
-            def make_text():
+            def make_counter():
                 if self.counter_visible == False:
                     text = manim.Text("0")
                     text.scale(4.0)
@@ -125,15 +141,13 @@ if cli.visualize:
                     reduce(mul, instruction) for instruction in sub_instructions
                 ]
                 sum_of_partial_solution = sum(partial_solution)
-                if self.current_val != sum_of_partial_solution:
-                    print(alpha, sub_data, "\n")
 
                 text = manim.Text(f"{sum_of_partial_solution}")
                 text.scale(4.0)
                 text.align_on_border(manim.UP, 2)
                 return text
 
-            self.current_counter = manim.always_redraw(make_text)
+            self.current_counter = manim.always_redraw(make_counter)
 
             if cli.sample:
                 self.original_text.scale(0.4)
@@ -145,8 +159,6 @@ if cli.visualize:
                 self.reduced_text.scale(0.255)
 
         def construct(self):
-            self.add(self.raw_reduced_text)
-
             self.play(manim.FadeIn(self.original_text))
             self.play(manim.Transform(self.original_text, self.highlight_text))
             self.play(manim.Transform(self.original_text, self.reduced_text))
@@ -165,7 +177,7 @@ if cli.visualize:
 
             self.counter_visible = True
 
-            run_time = 2 if cli.sample else 14
+            run_time = 2 if cli.sample else 20
             self.play(
                 manim.MoveToTarget(self.original_text),
                 manim.MoveToTarget(self.marker),
