@@ -9,3 +9,6 @@ venv/
 
 # manim media output
 media/
+
+# cProfile output
+*.prof
