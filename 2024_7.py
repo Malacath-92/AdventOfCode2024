@@ -21,20 +21,19 @@ class Calibration:
         [self.result, self.values] = data.split(":")
         self.result = int(self.result)
         self.values = list(map(int, self.values.split()))
-
-    def solve(self):
-        operators = [
+        self.operators = [
             operator.add,
             operator.mul,
         ]
 
+    def solve(self):
         def solve_impl(result, values, partial_attempt, partial_operators):
             if len(values) == 0:
                 if result == partial_attempt:
                     return partial_operators
                 return None
 
-            for operator in operators:
+            for operator in self.operators:
                 next_attempt = operator(partial_attempt, values[0])
                 next_values = values[1:]
                 next_operators = partial_operators + [operator]
@@ -55,3 +54,22 @@ solved_calibrations_results = [
 ]
 
 print(f"Problem 1: {sum(solved_calibrations_results)}")
+
+
+class ExtendedCalibration(Calibration):
+    def __init__(self, data):
+        super().__init__(data)
+        self.operators += [lambda l, r: int(str(l) + str(r))]
+
+
+extended_calibrations = list(map(ExtendedCalibration, data.splitlines()))
+solved_extended_calibrations = list(
+    map(ExtendedCalibration.solve, extended_calibrations)
+)
+solved_extended_calibrations_results = [
+    c.result
+    for c, s in zip(extended_calibrations, solved_extended_calibrations)
+    if s is not None
+]
+
+print(f"Problem 2: {sum(solved_extended_calibrations_results)}")
