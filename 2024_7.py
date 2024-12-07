@@ -1,5 +1,4 @@
 import aocd
-import operator
 
 import cli
 
@@ -18,58 +17,62 @@ data = sample_data if cli.sample else aocd.data
 
 class Calibration:
     def __init__(self, data):
-        [self.result, self.values] = data.split(":")
-        self.result = int(self.result)
-        self.values = list(map(int, self.values.split()))
-        self.operators = [
-            operator.add,
-            operator.mul,
-        ]
+        [result, values] = data.split(":")
+        self.result = int(result)
+        self.values = list(map(int, values.split()))
+        self.operators = ["+", "*"]
 
     def solve(self):
-        def solve_impl(result, values, partial_attempt, partial_operators):
-            if len(values) == 0:
+        num_values = len(self.values)
+
+        def solve_impl(result, values_handled, partial_attempt):
+            if values_handled == num_values:
                 if result == partial_attempt:
-                    return partial_operators
+                    return True
+                return False
+            elif partial_attempt >= result:
                 return None
 
             for operator in self.operators:
-                next_attempt = operator(partial_attempt, values[0])
-                next_values = values[1:]
-                next_operators = partial_operators + [operator]
-                if solution := solve_impl(
-                    result, next_values, next_attempt, next_operators
-                ):
+                match operator:
+                    case "+":
+                        next_attempt = partial_attempt + self.values[values_handled]
+                    case "*":
+                        next_attempt = partial_attempt * self.values[values_handled]
+                    case "|":
+                        next_attempt = int(
+                            str(partial_attempt) + str(self.values[values_handled])
+                        )
+                next_values_handled = values_handled + 1
+                if solution := solve_impl(result, next_values_handled, next_attempt):
                     return solution
 
-            return None
+            return False
 
-        return solve_impl(self.result, self.values, 0, [])
-
-
-calibrations = list(map(Calibration, data.splitlines()))
-solved_calibrations = list(map(Calibration.solve, calibrations))
-solved_calibrations_results = [
-    c.result for c, s in zip(calibrations, solved_calibrations) if s is not None
-]
-
-print(f"Problem 1: {sum(solved_calibrations_results)}")
+        return solve_impl(self.result, 0, 0)
 
 
 class ExtendedCalibration(Calibration):
     def __init__(self, data):
         super().__init__(data)
-        self.operators += [lambda l, r: int(str(l) + str(r))]
+        self.operators += ["|"]
+
+
+calibrations = list(map(Calibration, data.splitlines()))
+solvable_calibrations = list(map(Calibration.solve, calibrations))
+solvable_calibrations_results = [
+    c.result for c, s in zip(calibrations, solvable_calibrations) if s
+]
+
+print(f"Problem 1: {sum(solvable_calibrations_results)}")
 
 
 extended_calibrations = list(map(ExtendedCalibration, data.splitlines()))
-solved_extended_calibrations = list(
+solvable_extended_calibrations = list(
     map(ExtendedCalibration.solve, extended_calibrations)
 )
-solved_extended_calibrations_results = [
-    c.result
-    for c, s in zip(extended_calibrations, solved_extended_calibrations)
-    if s is not None
+solvable_extended_calibrations_results = [
+    c.result for c, s in zip(extended_calibrations, solvable_extended_calibrations) if s
 ]
 
-print(f"Problem 2: {sum(solved_extended_calibrations_results)}")
+print(f"Problem 2: {sum(solvable_extended_calibrations_results)}")

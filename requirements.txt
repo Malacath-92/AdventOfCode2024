@@ -1,5 +1,8 @@
 advent-of-code-data
 
+# Profiling only
+line_profiler
+
 # Visualization only
 manim
 scipy
