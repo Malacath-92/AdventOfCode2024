@@ -37,7 +37,7 @@ antenna_positions = {
     for antenna_type in antenna_types
 }
 
-anti_nodes = [[[] for _ in range(width)] for _ in range(height)]
+anti_nodes = [[set() for _ in range(width)] for _ in range(height)]
 
 for antenna_type, positions in antenna_positions.items():
     pairwise_positions = itertools.product(positions, positions)
@@ -48,11 +48,40 @@ for antenna_type, positions in antenna_positions.items():
         d = (l[0] - r[0], l[1] - r[1])
         anti_node_l = (l[0] + d[0], l[1] + d[1])
         if is_in_range(anti_node_l):
-            anti_nodes[anti_node_l[1]][anti_node_l[0]].append(antenna_type)
+            anti_nodes[anti_node_l[1]][anti_node_l[0]].add(antenna_type)
         anti_node_r = (r[0] - d[0], r[1] - d[1])
         if is_in_range(anti_node_r):
-            anti_nodes[anti_node_r[1]][anti_node_r[0]].append(antenna_type)
+            anti_nodes[anti_node_r[1]][anti_node_r[0]].add(antenna_type)
 
 anti_nodes_flat = list(itertools.chain.from_iterable(anti_nodes))
-num_positions_with_antinodes = len(anti_nodes_flat) - anti_nodes_flat.count([])
-print(f"Problem 1: {num_positions_with_antinodes}")
+num_positions_with_anti_nodes = len(anti_nodes_flat) - anti_nodes_flat.count(set())
+print(f"Problem 1: {num_positions_with_anti_nodes}")
+
+
+real_anti_nodes = [[set() for _ in range(width)] for _ in range(height)]
+
+for antenna_type, positions in antenna_positions.items():
+    pairwise_positions = itertools.product(positions, positions)
+    for l, r in pairwise_positions:
+        if l == r:
+            continue
+
+        d = (l[0] - r[0], l[1] - r[1])
+        while d[0] % 2 == 0 and d[1] % 2 == 0:
+            d = (d[0] // 2, d[1] // 2)
+
+        anti_node_l = l
+        while is_in_range(anti_node_l):
+            real_anti_nodes[anti_node_l[1]][anti_node_l[0]].add(antenna_type)
+            anti_node_l = (anti_node_l[0] + d[0], anti_node_l[1] + d[1])
+
+        anti_node_r = (l[0] - d[0], l[1] - d[1])
+        while is_in_range(anti_node_r):
+            real_anti_nodes[anti_node_r[1]][anti_node_r[0]].add(antenna_type)
+            anti_node_r = (anti_node_r[0] - d[0], anti_node_r[1] - d[1])
+
+real_anti_nodes_flat = list(itertools.chain.from_iterable(real_anti_nodes))
+num_positions_with_real_anti_nodes = len(
+    real_anti_nodes_flat
+) - real_anti_nodes_flat.count(set())
+print(f"Problem 1: {num_positions_with_real_anti_nodes}")
