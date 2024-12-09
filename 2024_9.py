@@ -1,24 +1,11 @@
 import aocd
-import itertools
+import collections
 
 import cli
 
 sample_data = """\
 2333133121414131402"""
 data = sample_data if cli.sample else aocd.data
-
-blocks = [
-    str(id // 2) if id % 2 == 0 else "."
-    for id, block_size in enumerate(data)
-    for _ in range(int(block_size))
-]
-num_empty_blocks = blocks.count(".")
-
-
-def get_next_non_empty_block(blocks, start):
-    while blocks[start] == ".":
-        start -= 1
-    return start
 
 
 def checksum(blocks):
@@ -29,6 +16,21 @@ def checksum(blocks):
     return chk
 
 
+################################################################################################
+# Problem 1
+def get_next_non_empty_block(blocks, start):
+    while blocks[start] == ".":
+        start -= 1
+    return start
+
+
+blocks = [
+    str(id // 2) if id % 2 == 0 else "."
+    for id, block_size in enumerate(data)
+    for _ in range(int(block_size))
+]
+num_empty_blocks = blocks.count(".")
+
 blocks = blocks.copy()
 last_non_empty_block = len(blocks) - 1
 while blocks[-num_empty_blocks:].count(".") < num_empty_blocks:
@@ -37,25 +39,24 @@ while blocks[-num_empty_blocks:].count(".") < num_empty_blocks:
     blocks[first_empty_block] = blocks[last_non_empty_block]
     blocks[last_non_empty_block] = "."
 
-
 print(f"Problem 1: {checksum(blocks)}")
 
 
-class Entry:
-    def __init__(self, size, idx):
-        self.size = size
-        self.id = idx // 2 if idx % 2 == 0 else -1
+################################################################################################
+# Problem 2
+def make_entry(size, idx):
+    class Entry:
+        def __init__(self, size, idx):
+            self.size = size
+            self.id = idx // 2 if idx % 2 == 0 else -1
 
-    def __str__(self):
-        return str(self.id) if self.id >= 0 else "."
-
-
-def entry(size, idx):
+        def __str__(self):
+            return str(self.id) if self.id >= 0 else "."
 
     return Entry(size, idx)
 
 
-disk = [entry(int(f), i) for i, f in enumerate(data)]
+disk = [make_entry(int(f), i) for i, f in enumerate(data)]
 file_idx = len(disk) - 1 if len(disk) % 2 != 0 else len(disk) - 2
 while file_idx > 0:
     # Find index of empty block range that fits this file
@@ -65,11 +66,11 @@ while file_idx > 0:
 
     # Move file if we found an index
     if empty_idx < file_idx:
-        # Insert file entry in new position
+        # Insert file entry in the new position
         disk[empty_idx : empty_idx + 1] = [
-            Entry(0, -1),
+            make_entry(0, -1),
             disk[file_idx],
-            Entry(disk[empty_idx].size - disk[file_idx].size, -1),
+            make_entry(disk[empty_idx].size - disk[file_idx].size, -1),
         ]
         file_idx += 2
 
