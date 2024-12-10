@@ -1,5 +1,7 @@
 import aocd
+import operator
 import itertools
+import functools
 
 import cli
 
@@ -19,6 +21,9 @@ mountains = data.splitlines()
 width = len(mountains[0])
 height = len(mountains)
 flat_idx_to_coords = lambda i: (i % width, i // width)
+is_in_range = lambda p: p[0] >= 0 and p[1] >= 0 and p[0] < width and p[1] < height
+neighbour = lambda pos, dir: (pos[0] + dir[0], pos[1] + dir[1])
+is_one_up = lambda h, pos: int(mountains[pos[1]][pos[0]]) == h + 1
 
 directions = [
     (-1, 0),
@@ -33,35 +38,36 @@ pos_in_range_map = {
     (0, +1): lambda x: x[1] < height,
 }
 
+starting_positions = list(
+    map(flat_idx_to_coords, [i for i, h in enumerate(flat_data) if h == "0"])
+)
+
 
 ################################################################################################
 # Problem 1
 def start_position_score(pos):
-    def high_points_reached(x, y, h):
+    def high_points_reached(h, pos):
         if h == 9:
-            return set([(x, y)])
+            return [pos]
 
-        high_points = set()
-        for dir in directions:
-            tx = x + dir[0]
-            ty = y + dir[1]
-            if pos_in_range_map[dir]((tx, ty)) and int(mountains[ty][tx]) == h + 1:
-                high_points.update(high_points_reached(tx, ty, h + 1))
-        return high_points
+        return itertools.chain.from_iterable(
+            map(
+                functools.partial(high_points_reached, h + 1),
+                filter(
+                    functools.partial(is_one_up, h),
+                    filter(
+                        is_in_range, map(functools.partial(neighbour, pos), directions)
+                    ),
+                ),
+            )
+        )
 
-    (x, y) = pos
-    return len(high_points_reached(x, y, 0))
+    return len(set(high_points_reached(0, pos)))
 
 
-starting_positions = list(
-    map(flat_idx_to_coords, [i for i, h in enumerate(flat_data) if h == "0"])
+high_points_trail_heads = filter(
+    operator.truth, map(start_position_score, starting_positions)
 )
-high_points_trail_heads = list(
-    itertools.filterfalse(
-        lambda x: x == 0, map(start_position_score, starting_positions)
-    )
-)
-
 print(f"Problem 1: {sum(high_points_trail_heads)}")
 
 
