@@ -56,10 +56,37 @@ def start_position_score(pos):
 starting_positions = list(
     map(flat_idx_to_coords, [i for i, h in enumerate(flat_data) if h == "0"])
 )
-trail_heads = list(
+high_points_trail_heads = list(
     itertools.filterfalse(
         lambda x: x == 0, map(start_position_score, starting_positions)
     )
 )
 
-print(f"Problem 1: {sum(trail_heads)}")
+print(f"Problem 1: {sum(high_points_trail_heads)}")
+
+
+################################################################################################
+# Problem 2
+def start_position_score(pos):
+    def num_trails_available(x, y, h):
+        if h == 9:
+            return 1
+
+        score = 0
+        for dir in directions:
+            tx = x + dir[0]
+            ty = y + dir[1]
+            if pos_in_range_map[dir]((tx, ty)) and int(mountains[ty][tx]) == h + 1:
+                score += num_trails_available(tx, ty, h + 1)
+        return score
+
+    (x, y) = pos
+    return num_trails_available(x, y, 0)
+
+
+trails_reached_trail_heads = list(
+    itertools.filterfalse(
+        lambda x: x == 0, map(start_position_score, starting_positions)
+    )
+)
+print(f"Problem 2: {sum(trails_reached_trail_heads)}")
