@@ -1,5 +1,8 @@
 advent-of-code-data
 
+# Progress Bar
+tqdm
+
 # Profiling only
 line_profiler
 

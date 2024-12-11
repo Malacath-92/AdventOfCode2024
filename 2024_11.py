@@ -1,6 +1,7 @@
 import aocd
 import itertools
 import functools
+from tqdm import tqdm as progress
 from typing import Iterable, DefaultDict
 
 import cli
@@ -61,7 +62,7 @@ def multi_steps(steps: int, stones: Iterable[int]) -> DefaultDict[int, int]:
         else:
             stone_counts[stone * 2024] += num
 
-    for _ in range(steps):
+    for _ in progress(range(steps)):
         old_counts = stone_counts.copy()
         for stone, num in old_counts.items():
             single_step(stone, num)
