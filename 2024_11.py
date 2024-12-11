@@ -1,7 +1,7 @@
 import aocd
 import itertools
 import functools
-from typing import Iterable
+from typing import Iterable, DefaultDict
 
 import cli
 
@@ -43,37 +43,23 @@ print(f"Problem 1: {len(list(after_25_steps))}")
 
 ################################################################################################
 # Problem 2
-def multi_steps(steps: int, stones: Iterable[int]) -> dict[int, int]:
-    stone_counts: dict[int, int] = {}
-
-    def decrement(stone: int, num: int) -> None:
-        if stone not in stone_counts:
-            raise "Can't remove stone that hasn't been counted yet..."
-        elif stone_counts[stone] < num:
-            raise "Can't remove stone more times than it has been counted so far..."
-        else:
-            stone_counts[stone] -= num
-
-    def increment(stone: int, num: int) -> None:
-        if stone not in stone_counts:
-            stone_counts[stone] = num
-        else:
-            stone_counts[stone] += num
+def multi_steps(steps: int, stones: Iterable[int]) -> DefaultDict[int, int]:
+    stone_counts = DefaultDict[int, int](lambda: 0)
 
     for stone in stones:
-        increment(stone, 1)
+        stone_counts[stone] += 1
 
     def single_step(stone: int, num: int) -> None:
-        decrement(stone, num)
+        stone_counts[stone] -= num
         if stone == 0:
-            increment(1, num)
+            stone_counts[1] += num
         elif len(str(stone)) % 2 == 0:
             stone_str = str(stone)
             half_len = len(stone_str) // 2
-            increment(int(stone_str[:half_len]), num)
-            increment(int(stone_str[half_len:]), num)
+            stone_counts[int(stone_str[:half_len])] += num
+            stone_counts[int(stone_str[half_len:])] += num
         else:
-            increment(stone * 2024, num)
+            stone_counts[stone * 2024] += num
 
     for _ in range(steps):
         old_counts = stone_counts.copy()
