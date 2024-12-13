@@ -22,6 +22,8 @@ Button B: X+27, Y+71
 Prize: X=18641, Y=10279"""
 data = sample_data if cli.sample else aocd.data
 
+Vector = tuple[int, int]
+
 
 class ClawButton:
     def __init__(self, setup: str):
@@ -48,6 +50,16 @@ class Game:
             int(price_placement[0].split("=")[1].strip()),
             int(price_placement[1].split("=")[1].strip()),
         )
+
+    @classmethod
+    def from_parsed_values(
+        cls, a_button: ClawButton, b_button: ClawButton, price_placement: Vector
+    ):
+        obj = cls.__new__(cls)
+        obj.a_button = a_button
+        obj.b_button = b_button
+        obj.price_placement = price_placement
+        return obj
 
 
 class GameSolution(NamedTuple):
@@ -95,3 +107,21 @@ print(f"Problem 1: {sum(tokens_used)}")
 
 ################################################################################################
 # Problem 2
+
+
+def in_actual_positions(game: Game) -> Game:
+    real_price_placement = (
+        game.price_placement[0] + 10000000000000,
+        game.price_placement[1] + 10000000000000,
+    )
+    return Game.from_parsed_values(
+        game.a_button,
+        game.b_button,
+        real_price_placement,
+    )
+
+
+real_games = list(map(in_actual_positions, games))
+real_solutions = list(filter(None, map(solve_game, real_games)))
+real_tokens_used = list(map(GameSolution.tokens_needed, real_solutions))
+print(f"Problem 2: {sum(real_tokens_used)}")
