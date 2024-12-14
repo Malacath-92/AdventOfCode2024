@@ -101,7 +101,7 @@ def solve_game(game: Game) -> GameSolution | None:
     return GameSolution(a_presses, b_presses)
 
 
-solutions = list(filter(None, map(solve_game, games)))
+solutions = list(filter(None, progress(map(solve_game, games))))
 tokens_used = list(map(GameSolution.tokens_needed, solutions))
 print(f"Problem 1: {sum(tokens_used)}")
 
@@ -122,6 +122,6 @@ def in_actual_positions(game: Game) -> Game:
 
 
 real_games = list(map(in_actual_positions, games))
-real_solutions = list(filter(None, map(solve_game, real_games)))
+real_solutions = list(filter(None, progress(map(solve_game, real_games))))
 real_tokens_used = list(map(GameSolution.tokens_needed, real_solutions))
 print(f"Problem 2: {sum(real_tokens_used)}")
