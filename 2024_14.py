@@ -1,8 +1,7 @@
 import aocd
 import re
+import math
 import functools
-import os
-import pathlib
 from typing import NamedTuple
 from tqdm import tqdm as progress
 
@@ -41,6 +40,9 @@ class Vector(NamedTuple):
 
     def __mul__(lhs, rhs: int):
         return Vector(lhs.x * rhs, lhs.y * rhs)
+
+    def __truediv__(lhs, rhs: int):
+        return Vector(lhs.x / rhs, lhs.y / rhs)
 
 
 class Robot(NamedTuple):
@@ -84,30 +86,39 @@ print(f"Problem 1: {solution}")
 
 ################################################################################################
 # Problem 2
-out_folder = pathlib.Path("media/14_2")
-if not os.path.exists(out_folder):
-    os.makedirs(out_folder)
+def average_distance(robots: list[Robot]) -> Vector:
+    def vec_len(vec: Vector):
+        return math.sqrt(vec.x * vec.x + vec.y * vec.y)
+
+    return vec_len(
+        sum(map(lambda x: x.pos, robots), Vector(0, 0)) / len(robots)
+        - Vector(width // 2 + 1, height // 2 + 1)
+    )
 
 
-def render_robots(robots: list[Robot], iteration: int):
-    flags = [[False] * width for _ in range(height)]
-    for robot in robots:
-        flags[robot.pos.y][robot.pos.x] = True
-
-    flags = np.array(flags)
-
-    size = flags.shape[::-1]
-    flags_bytes = np.packbits(flags, axis=1)
-    image = Image.frombytes(mode="1", size=size, data=flags_bytes)
-
-    out_file = out_folder / f"{iteration}.png"
-    if os.path.exists(out_file):
-        os.remove(out_file)
-    image.save(out_file)
-
-
-for i in progress(range(10000)):
-    render_robots(robots, i)
+states = []
+for i in progress(range(width * height)):
+    states.append(robots)
     robots = list(map(functools.partial(Robot.move, steps=1), robots))
+distances = list(map(average_distance, states))
+(i_max, d_max) = max(enumerate(distances), key=lambda x: x[1])
 
-print("Problem 2: Have fun looking through ten thousand images...")
+print(f"Problem 2: {i_max}")
+
+
+if cli.verbose:
+
+    def render_robots(robots: list[Robot]):
+        flags = [[False] * width for _ in range(height)]
+        for robot in robots:
+            flags[robot.pos.y][robot.pos.x] = True
+
+        flags = np.array(flags)
+
+        size = flags.shape[::-1]
+        flags_bytes = np.packbits(flags, axis=1)
+        image = Image.frombytes(mode="1", size=size, data=flags_bytes)
+
+        image.show()
+
+    render_robots(states[i_max])
