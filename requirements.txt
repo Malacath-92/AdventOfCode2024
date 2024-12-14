@@ -1,5 +1,8 @@
 advent-of-code-data
 
+# Day 14 Part 2
+Pillow
+
 # Progress Bar
 tqdm
 

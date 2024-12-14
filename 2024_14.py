@@ -1,8 +1,13 @@
 import aocd
 import re
 import functools
+import os
+import pathlib
 from typing import NamedTuple
 from tqdm import tqdm as progress
+
+from PIL import Image
+import numpy as np
 
 import cli
 
@@ -76,5 +81,33 @@ bl_quadrant = list(
 solution = len(tl_quadrant) * len(tr_quadrant) * len(br_quadrant) * len(bl_quadrant)
 print(f"Problem 1: {solution}")
 
+
 ################################################################################################
 # Problem 2
+out_folder = pathlib.Path("media/14_2")
+if not os.path.exists(out_folder):
+    os.makedirs(out_folder)
+
+
+def render_robots(robots: list[Robot], iteration: int):
+    flags = [[False] * width for _ in range(height)]
+    for robot in robots:
+        flags[robot.pos.y][robot.pos.x] = True
+
+    flags = np.array(flags)
+
+    size = flags.shape[::-1]
+    flags_bytes = np.packbits(flags, axis=1)
+    image = Image.frombytes(mode="1", size=size, data=flags_bytes)
+
+    out_file = out_folder / f"{iteration}.png"
+    if os.path.exists(out_file):
+        os.remove(out_file)
+    image.save(out_file)
+
+
+for i in progress(range(10000)):
+    render_robots(robots, i)
+    robots = list(map(functools.partial(Robot.move, steps=1), robots))
+
+print("Problem 2: Have fun looking through ten thousand images...")
