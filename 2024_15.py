@@ -179,7 +179,43 @@ for op in moves:
         robot_pos = robot_pos + dir
 
 flat_widened_floor_plan = "".join(map(lambda x: "".join(x), widened_floor_plan))
-box_coordinates = map(lambda x: flat_idx_to_coords(x.regs[0][0]), re.finditer("\[\]", flat_widened_floor_plan))
+box_coordinates = map(lambda x: flat_idx_to_coords(x.regs[0][0]), re.finditer(r"\[\]", flat_widened_floor_plan))
 gps_values = map(lambda p: 100 * p.y + p.x, box_coordinates)
 
 print(f"Problem 2: {sum(gps_values)}")
+
+################################################################################################
+# Interactive
+if cli.verbose:
+    import os
+    import getkey
+
+    class Keys(Enum):
+        RIGHT = 'àM'
+        LEFT  = 'àK'
+        UP  = 'àH'
+        DOWN  = 'àP'
+
+    widened_floor_plan = list(map(widen_row, floor_plan))
+    flat_widened_floor_plan = "".join(map(lambda x: "".join(x), widened_floor_plan))
+    robot_pos = flat_idx_to_coords(flat_widened_floor_plan.find("@"))
+
+    print_floor(widened_floor_plan)
+
+    while key := getkey.getkey():
+        
+        match key:
+            case Keys.RIGHT.value:
+                op = '>'
+            case Keys.LEFT.value:
+                op = '<'
+            case Keys.UP.value:
+                op = '^'
+            case Keys.DOWN.value:
+                op = 'v'
+                
+        dir = directions[op]
+        if try_move(widened_floor_plan, robot_pos, dir):
+            robot_pos = robot_pos + dir
+        os.system('cls')
+        print_floor(widened_floor_plan)

@@ -3,6 +3,9 @@ advent-of-code-data
 # Day 14 Part 2
 Pillow
 
+# Day 15 Part 2
+get-key
+
 # Progress Bar
 tqdm
 
