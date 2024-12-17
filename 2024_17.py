@@ -1,6 +1,9 @@
 import aocd
 import re
 import abc
+import math
+from typing import NamedTuple
+from tqdm import tqdm as progress
 
 import cli
 
@@ -34,6 +37,12 @@ class Program:
     def __init__(self, octal_code: str):
         self.octals = list(map(int, octal_code.split(",")))
         self.instruction_pointer = 0
+
+    def reset(self):
+        self.instruction_pointer = 0
+
+    def octal_source(self) -> str:
+        return ",".join(map(str, self.octals))
 
     def eop(self) -> bool:
         return self.instruction_pointer >= len(self.octals)
@@ -150,11 +159,14 @@ class JumpNotZero(Instruction):
 
 class Output(Instruction):
     def disasm(self, prog: Program, mach: Machine) -> str:
-        return f"out {self.combo_str(prog.octal(1), mach)}"
+        return f"out {self.combo_str(prog.octal(1), mach)} # {self.gen_out(prog, mach)}"
 
     def execute(self, prog: Program, mach: Machine) -> None:
-        mach.out.append(str(self.combo(prog.octal(1), mach) % 8))
+        mach.out.append(self.gen_out(prog, mach))
         prog.advance(2)
+
+    def gen_out(self, prog: Program, mach: Machine) -> str:
+        return str(self.combo(prog.octal(1), mach) % 8)
 
 
 instructions: dict[int, Instruction] = {
@@ -191,3 +203,34 @@ out, disasm = execute(program, machine, generate_disasm=True)
 
 print("Disasm:\n\t" + "\n\t".join(disasm))
 print("Output:\n\t" + ",".join(out))
+
+################################################################################################
+# Problem 2
+
+# Observations to make this solution make sense:
+# - each out instruction happens after taking off the three right-most bits of RAM (one octal)
+# - for each octal the output value of that octal is not affected by any octals to the right of it
+# -
+
+
+def solve_for_specific_ram(ram: int):
+    machine = Machine(registers.splitlines())
+    machine.ram = ram
+
+    program.reset()
+    out, _ = execute(program, machine)
+    return out
+
+
+possible_values: list[int] = [0]
+for i, op in enumerate(reversed(program.octals)):
+    new_values = []
+    for base_ram in possible_values:
+        octals = list(map(lambda j: (base_ram << 3) | j, range(0, 8)))
+        octal_map = list(map(lambda o: int(solve_for_ram(o)[0]), octals))
+        indices = [i for i, o in enumerate(octal_map) if o == op]
+        for j in indices:
+            new_values.append((base_ram << 3) | j)
+    possible_values = new_values
+
+print(min(possible_values))
