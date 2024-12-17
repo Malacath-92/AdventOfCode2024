@@ -1,8 +1,6 @@
 import aocd
 import re
 import abc
-import math
-from typing import NamedTuple
 from tqdm import tqdm as progress
 
 import cli
@@ -210,7 +208,7 @@ print("Output:\n\t" + ",".join(out))
 # Observations to make this solution make sense:
 # - each out instruction happens after taking off the three right-most bits of RAM (one octal)
 # - for each octal the output value of that octal is not affected by any octals to the right of it
-# -
+# - so we can find chains of octals by starting from the left-most octal
 
 
 def solve_for_specific_ram(ram: int):
@@ -223,14 +221,26 @@ def solve_for_specific_ram(ram: int):
 
 
 possible_values: list[int] = [0]
-for i, op in enumerate(reversed(program.octals)):
+for op in progress(list(reversed(program.octals))):
     new_values = []
     for base_ram in possible_values:
-        octals = list(map(lambda j: (base_ram << 3) | j, range(0, 8)))
-        octal_map = list(map(lambda o: int(solve_for_ram(o)[0]), octals))
-        indices = [i for i, o in enumerate(octal_map) if o == op]
+        # shift to make space for fresh octals
+        base_ram <<= 3
+
+        # get a list of the eight possible values to extend this potential solution
+        extended_rams = list(map(lambda j: base_ram | j, range(0, 8)))
+
+        # compute these eight programs and see what eight outputs they add
+        output_map = list(
+            map(lambda o: int(solve_for_specific_ram(o)[0]), extended_rams)
+        )
+
+        # for each one that has the desired output add it to the list of potential solutions
+        indices = [i for i, o in enumerate(output_map) if o == op]
         for j in indices:
-            new_values.append((base_ram << 3) | j)
+            new_values.append(base_ram | j)
+
     possible_values = new_values
 
-print(min(possible_values))
+# we have a set of solutions now, the problem asks for the smallest
+print(f"Problem 2: {min(possible_values)}")
