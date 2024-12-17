@@ -1,5 +1,4 @@
 import aocd
-import enum
 from functools import reduce
 from operator import mul
 
