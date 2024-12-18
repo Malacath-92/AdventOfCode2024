@@ -73,6 +73,72 @@ def print_world_with_solution(world: World, solution: Path, time: int):
     print_world(world_with_solution, time)
 
 
+# def bfs(
+#     world: World,
+#     start_pos: Vector,
+#     end_pos: Vector,
+#     fixed_time: int | None,
+#     find_single_path: bool,
+# ) -> list[Path] | Path:
+#     # class SearchNode(NamedTuple):
+#     #     pos: Vector
+
+#     class QueueElem(NamedTuple):
+#         score: int
+#         pos: Vector
+#         dir: Vector
+#         path: Path
+
+#     target_score = math.inf
+#     paths: list[Path] = []
+
+#     visited: dict[Vector, int] = {}
+#     # visited: dict[SearchNode, int] = {}
+#     queue: list[QueueElem] = [QueueElem(0, start_pos, Vector(1, 0), [])]
+#     while queue:
+#         # arrived at only nodes that are too expensive, call it quits
+#         score, pos, dir, path = heappop(queue)
+#         if score > target_score:
+#             break
+
+#         # remember this node
+#         node = pos
+#         # node = SearchNode(pos)
+#         if node in visited and visited[node] < score:
+#             continue
+#         visited[node] = score
+
+#         prev = world[pos.y][pos.x]
+#         world[pos.y][pos.x] = "X"
+#         paths = list(visited.keys())
+#         del paths[paths.index(pos)]
+#         print_world_with_solution(world, paths, fixed_time)
+#         world[pos.y][pos.x] = prev
+
+#         def free_tile(p: Vector, score: int):
+#             if not is_in_range(p):
+#                 return False
+
+#             tile = world[p.y][p.x]
+#             time = fixed_time if fixed_time else score
+#             return True if tile is None or tile > time else False
+
+#         # push forward, left, and right options
+#         for next_dir in (dir, Vector(dir.y, -dir.x), Vector(-dir.y, dir.x)):
+#             next = pos + next_dir
+#             if free_tile(next, score):
+#                 heappush(queue, QueueElem(score + 1, next, next_dir, path + [pos]))
+
+#         # if we arrived at the end, store this as a path
+#         # and remember its score to quit when we get past it
+#         if pos == end_pos:
+#             target_score = score
+#             if find_single_path:
+#                 return path + [end_pos]
+#             paths.append(path + [end_pos])
+
+#     return paths
+
 directions = [
     Vector(-1, 0),
     Vector(+1, 0),
@@ -118,3 +184,21 @@ print(f"Problem 1: {len(path) - 1}")
 
 ################################################################################################
 # Problem 2
+
+# binary search the problem space
+bot_time = 0
+top_time = len(bytes)
+while True:
+    mid_time = bot_time + (top_time - bot_time) // 2
+    if Solver(mid_time).astar(start_pos, end_pos):
+        bot_time = mid_time + 1
+    else:
+        top_time = mid_time - 1
+
+    if bot_time >= top_time:
+        break
+
+blocking_time = mid_time + 1 if Solver(mid_time).astar(start_pos, end_pos) else mid_time
+blocking_byte = bytes[blocking_time - 1]
+blocking_byte = Vector(int(blocking_byte[0]), int(blocking_byte[1]))
+print(f"Problem 2: {blocking_byte}")
