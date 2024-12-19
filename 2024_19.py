@@ -60,3 +60,27 @@ print(f"Problem 1: {len(possible_patterns)}")
 
 ################################################################################################
 # Problem 2
+@functools.cache
+def find_towel_combination(towels: tuple[str], pattern: str) -> int:
+    eligible_towels = tuple(
+        filter(lambda t: all(map(lambda s: s in pattern, t)), towels)
+    )
+
+    @functools.cache
+    def find_towel_combination_impl(towels: tuple[str], pattern: str) -> int:
+        if not pattern:
+            return 1
+
+        num = 0
+        for towel in towels:
+            if pattern.startswith(towel):
+                num += find_towel_combination_impl(towels, pattern.removeprefix(towel))
+        return num
+
+    return find_towel_combination_impl(eligible_towels, pattern)
+
+
+possible_patterns = list(
+    map(functools.partial(find_towel_combination, towels), progress(patterns))
+)
+print(f"Problem 1: {sum(possible_patterns)}")
