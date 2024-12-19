@@ -28,59 +28,36 @@ towels = tuple(reversed(sorted(towels.split(", "), key=lambda t: len(t))))
 patterns = patterns.splitlines()
 
 
-################################################################################################
-# Problem 1
 @functools.cache
-def find_towel_combination(towels: tuple[str], pattern: str) -> bool:
+def count_towel_combinations(towels: tuple[str], pattern: str) -> int:
     eligible_towels = tuple(
         filter(lambda t: all(map(lambda s: s in pattern, t)), towels)
     )
 
     @functools.cache
-    def find_towel_combination_impl(towels: tuple[str], pattern: str) -> bool:
-        if not pattern:
-            return True
-
-        for towel in towels:
-            if pattern.startswith(towel) and find_towel_combination_impl(
-                towels, pattern.removeprefix(towel)
-            ):
-                return True
-        return False
-
-    return find_towel_combination_impl(eligible_towels, pattern)
-
-
-possible_patterns = list(
-    map(functools.partial(find_towel_combination, towels), progress(patterns))
-)
-possible_patterns = list(filter(None, possible_patterns))
-print(f"Problem 1: {len(possible_patterns)}")
-
-
-################################################################################################
-# Problem 2
-@functools.cache
-def find_towel_combination(towels: tuple[str], pattern: str) -> int:
-    eligible_towels = tuple(
-        filter(lambda t: all(map(lambda s: s in pattern, t)), towels)
-    )
-
-    @functools.cache
-    def find_towel_combination_impl(towels: tuple[str], pattern: str) -> int:
+    def count_towel_combinations(towels: tuple[str], pattern: str) -> int:
         if not pattern:
             return 1
 
         num = 0
         for towel in towels:
             if pattern.startswith(towel):
-                num += find_towel_combination_impl(towels, pattern.removeprefix(towel))
+                num += count_towel_combinations(towels, pattern.removeprefix(towel))
         return num
 
-    return find_towel_combination_impl(eligible_towels, pattern)
+    return count_towel_combinations(eligible_towels, pattern)
 
 
-possible_patterns = list(
-    map(functools.partial(find_towel_combination, towels), progress(patterns))
+towel_combinations = list(
+    map(functools.partial(count_towel_combinations, towels), progress(patterns))
 )
-print(f"Problem 1: {sum(possible_patterns)}")
+towel_combinations = list(filter(None, towel_combinations))
+
+################################################################################################
+# Problem 1
+print(f"Problem 1: {len(towel_combinations)}")
+
+
+################################################################################################
+# Problem 2
+print(f"Problem 1: {sum(towel_combinations)}")
