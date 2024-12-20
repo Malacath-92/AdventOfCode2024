@@ -177,6 +177,8 @@ else:
 
 ################################################################################################
 # Problem 2
+partial_scores = {pos: len(path) for pos, path in partial_paths.items()}
+
 num_cheats: int = 0
 cheat_margin = 99
 for i, pos in enumerate(regular_path):
@@ -190,7 +192,7 @@ for i, pos in enumerate(regular_path):
             continue
 
         # the score of this cheated path can be computed from the partial paths
-        cheated_score = i + dist + len(partial_paths[target_pos])
+        cheated_score = i + dist + partial_scores[target_pos]
         if cheated_score > regular_score - cheat_margin:
             continue
 
