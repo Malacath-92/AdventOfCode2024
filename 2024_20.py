@@ -177,3 +177,24 @@ else:
 
 ################################################################################################
 # Problem 2
+num_cheats: int = 0
+cheat_margin = 99
+for i, pos in enumerate(regular_path):
+    # can't cheat more than 100 points unless the target is at least 100 away
+    possible_targets = regular_path[i + 100 :]
+
+    for target_pos in possible_targets:
+        # if we are further than 20 steps away we can't reach this via cheating
+        dist = pos.manhattan_dist(target_pos)
+        if dist > 20:
+            continue
+
+        # the score of this cheated path can be computed from the partial paths
+        cheated_score = i + dist + len(partial_paths[target_pos])
+        if cheated_score > regular_score - cheat_margin:
+            continue
+
+        # found a cheat that is fast enough  🙌
+        num_cheats += 1
+
+print(f"Problem 2: {num_cheats}")

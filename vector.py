@@ -26,3 +26,10 @@ class Vector(NamedTuple):
 
     def len(self):
         return math.sqrt(self.x * self.x + self.y * self.y)
+
+    def dist(self, rhs):
+        return (self - rhs).len()
+
+    def manhattan_dist(self, rhs):
+        diff = self - rhs
+        return abs(diff.x) + abs(diff.y)
