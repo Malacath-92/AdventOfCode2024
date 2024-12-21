@@ -9,6 +9,9 @@ get-key
 # Day 16 Part 1
 sortedcontainers
 
+# Day 20 Part 1
+frozendict
+
 # Progress Bar
 tqdm
 
