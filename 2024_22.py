@@ -1,5 +1,6 @@
 import aocd
 import functools
+from tqdm import tqdm as progress
 
 import cli
 
@@ -31,7 +32,7 @@ def calculate_nth_trans(val: int, n: int) -> int:
 
 
 values_2000th = list(
-    map(functools.partial(calculate_nth_trans, n=2000), initial_values)
+    map(functools.partial(calculate_nth_trans, n=2000), progress(initial_values))
 )
 print(f"Problem 1: {sum(values_2000th)}")
 
@@ -103,10 +104,16 @@ def find_best_trans_diff_sequence(
 
 
 trans_2000th = list(
-    map(functools.partial(calculate_trans_list_to_nth, n=2000), initial_values)
+    map(
+        functools.partial(calculate_trans_list_to_nth, n=2000), progress(initial_values)
+    )
 )
-diffs_2000th = list(map(calculate_trans_diffs, trans_2000th))
-sequence_maps_200th = compute_trans_diff_sequence_maps(trans_2000th, diffs_2000th)
-best_sequence, best_reward = find_best_trans_diff_sequence(sequence_maps_200th)
+diffs_2000th = list(map(calculate_trans_diffs, progress(trans_2000th)))
+sequence_maps_200th = compute_trans_diff_sequence_maps(
+    progress(trans_2000th), diffs_2000th
+)
+best_sequence, best_reward = find_best_trans_diff_sequence(
+    progress(sequence_maps_200th)
+)
 
 print(f"Problem 2: {best_reward}")
