@@ -75,23 +75,19 @@ def find_maximum_network():
     adjacents: dict[str, list[str]] = {f: t.copy() for f, t in connections.items()}
 
     while nodes:
+        first_node = nodes[0]
         network = [nodes[0]]
 
-        i = 0
-        while i < len(network):
-            node = network[0]
-            for other_node in adjacents[node]:
-                if other_node in network:
-                    continue
+        for other_node in adjacents[first_node]:
+            if other_node in network:
+                continue
 
-                if all(other_node in adjacents[n] for n in network):
-                    network.append(other_node)
-            i = i + 1
+            if all(other_node in adjacents[n] for n in network):
+                network.append(other_node)
 
         if len(network) > len(largest_network):
             largest_network = network
 
-        first_node = network[0]
         nodes.remove(first_node)
         for _, t in adjacents.items():
             if first_node in t:
