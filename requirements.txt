@@ -12,6 +12,9 @@ sortedcontainers
 # Day 20 Part 1
 frozendict
 
+# Day 23 Part 2, I caved
+networkx
+
 # Progress Bar
 tqdm
 

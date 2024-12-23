@@ -1,5 +1,5 @@
 import aocd
-import functools
+import networkx
 from typing import DefaultDict
 from tqdm import tqdm as progress
 
@@ -52,7 +52,7 @@ for l in data.splitlines():
 t_devices = list(filter(lambda d: d[0] == "t", connections.keys()))
 
 three_networks: set[tuple[str, str, str]] = set()
-for first_device in t_devices:
+for first_device in progress(t_devices):
     for second_device in connections[first_device]:
         for third_device in connections[second_device]:
             if third_device == first_device:
@@ -69,3 +69,10 @@ print(f"Problem 1: {len(three_networks)}")
 
 ################################################################################################
 # Problem 2
+graph = networkx.Graph()
+for f, ts in connections.items():
+    for t in ts:
+        graph.add_edge(f, t)
+
+largest_network = max(networkx.find_cliques(graph), key=len)
+print(f"Problem 1: {",".join(sorted(largest_network))}")
