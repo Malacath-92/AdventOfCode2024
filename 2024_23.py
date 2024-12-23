@@ -1,5 +1,4 @@
 import aocd
-import networkx
 from typing import DefaultDict
 from tqdm import tqdm as progress
 
@@ -69,10 +68,36 @@ print(f"Problem 1: {len(three_networks)}")
 
 ################################################################################################
 # Problem 2
-graph = networkx.Graph()
-for f, ts in connections.items():
-    for t in ts:
-        graph.add_edge(f, t)
+def find_maximum_network():
+    largest_network = []
 
-largest_network = max(networkx.find_cliques(graph), key=len)
-print(f"Problem 1: {",".join(sorted(largest_network))}")
+    nodes: list[str] = list(connections.keys())
+    adjacents: dict[str, list[str]] = {f: t.copy() for f, t in connections.items()}
+
+    while nodes:
+        network = [nodes[0]]
+
+        i = 0
+        while i < len(network):
+            node = network[0]
+            for other_node in adjacents[node]:
+                if other_node in network:
+                    continue
+
+                if all(other_node in adjacents[n] for n in network):
+                    network.append(other_node)
+            i = i + 1
+
+        if len(network) > len(largest_network):
+            largest_network = network
+
+        first_node = network[0]
+        nodes.remove(first_node)
+        for _, t in adjacents.items():
+            if first_node in t:
+                t.remove(first_node)
+
+    return largest_network
+
+
+print(f"Problem 1: {",".join(sorted(find_maximum_network()))}")
