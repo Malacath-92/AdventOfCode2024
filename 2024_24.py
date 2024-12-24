@@ -157,32 +157,27 @@ def add_bits(
         raise "Bruh..."
 
     if carry is None:
-        # make sure we are not writing the carry result into a z-bit, we should be
-        # writing the sum result into a z-bit
-        if interim_carry[0] == "z":
-            interim_carry, interim_sum = interim_sum, interim_carry
-            swapped_outputs.append(interim_carry)
-            swapped_outputs.append(interim_sum)
-
         # without a carry input we have to do no more work
-        return interim_sum, interim_carry
+        out_sum, out_carry = interim_sum, interim_carry
     else:
         interim_sum_carry = find_output_bit(carry, interim_sum, "AND")
+        out_sum = find_output_bit(carry, interim_sum, "XOR")
+
         if interim_sum_carry is None:
+            # for the program to be well-formed these two have to be None at
+            # the same time, so we re-assign them together
+            assert out_sum is None
+
             # can't find output bit, must be swapped
             interim_sum, interim_carry = interim_carry, interim_sum
             interim_sum_carry = find_output_bit(carry, interim_sum, "AND")
+            out_sum = find_output_bit(carry, interim_sum, "XOR")
 
             swapped_outputs.append(interim_sum)
             swapped_outputs.append(interim_carry)
 
-        # we swapped the output bits earlier, so this has to be found, otherwise
-        # we would have to double-swap the same bits
-        out_sum = find_output_bit(carry, interim_sum, "XOR")
-
-        # the final sum has to be written into a z-bit, otherwise it would
-        # not contribute correctly to the final sum. so we make sure none
-        # of the intermediate results are written into a z-bit
+        # the intermediate results should not be written into a z-bit, those
+        # should be reserved for final outputs
         if interim_sum[0] == "z":
             interim_sum, out_sum = out_sum, interim_sum
             swapped_outputs.append(interim_sum)
@@ -196,18 +191,18 @@ def add_bits(
             swapped_outputs.append(interim_sum_carry)
             swapped_outputs.append(out_sum)
 
-        # again, we were swapping already so we have to find this, otherwise
-        # the program must be ill-formed
+        # we already swapped offending bits in this operation, so this next
+        # bit has to be found, otherwise the program must be ill-formed
         out_carry = find_output_bit(interim_sum_carry, interim_carry, "OR")
 
-        # make sure we are not writing the carry result into a z-bit, we should be
-        # writing the sum result into a z-bit
-        if out_carry[0] == "z":
-            out_carry, out_sum = out_sum, out_carry
-            swapped_outputs.append(out_carry)
-            swapped_outputs.append(out_sum)
+    # make sure we are not writing the carry result into a z-bit, we should be
+    # writing the sum result into a z-bit
+    if out_carry[0] == "z":
+        out_carry, out_sum = out_sum, out_carry
+        swapped_outputs.append(out_carry)
+        swapped_outputs.append(out_sum)
 
-        return out_sum, out_carry
+    return out_sum, out_carry
 
 
 x_names = list(reversed(sorted(filter(lambda x: x[0] == "x", initials.keys()))))
@@ -226,6 +221,6 @@ for i in range(max_bits_xy):
     out_sum, out_carry = add_bits(lhs, rhs, in_carry, swapped_outputs)
 
     # pass carry to next iteration
-    in_carry = out_carry if out_carry else find_output_bit(lhs, rhs, "AND")
+    in_carry = out_carry
 
 print(f"Problem 2: {','.join(sorted(swapped_outputs))}")
