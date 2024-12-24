@@ -123,7 +123,7 @@ def find_output_bit(lhs: str, rhs: str, operation: str) -> str | None:
 ################################################################################################
 # Problem 2
 # We reproduce the whole logic of adding two numbers in binary and hope that the program was
-# initially using the same algorithm. Then we fix the gates on the way
+# initially using the same algorithm. Then we fix the gates on the way...
 #
 #  See here for all details: https://en.wikipedia.org/wiki/Adder_(electronics)#Full_adder
 #
@@ -157,6 +157,13 @@ def add_bits(
         raise "Bruh..."
 
     if carry is None:
+        # make sure we are not writing the carry result into a z-bit, we should be
+        # writing the sum result into a z-bit
+        if interim_carry[0] == "z":
+            interim_carry, interim_sum = interim_sum, interim_carry
+            swapped_outputs.append(interim_carry)
+            swapped_outputs.append(interim_sum)
+
         # without a carry input we have to do no more work
         return interim_sum, interim_carry
     else:
@@ -194,7 +201,7 @@ def add_bits(
         out_carry = find_output_bit(interim_sum_carry, interim_carry, "OR")
 
         # make sure we are not writing the carry result into a z-bit, we should be
-        # writing the out_sum into a z-bit
+        # writing the sum result into a z-bit
         if out_carry[0] == "z":
             out_carry, out_sum = out_sum, out_carry
             swapped_outputs.append(out_carry)
@@ -218,7 +225,7 @@ for i in range(max_bits_xy):
     # add these two bits and carry bit from last add
     out_sum, out_carry = add_bits(lhs, rhs, in_carry, swapped_outputs)
 
-    # update carry
+    # pass carry to next iteration
     in_carry = out_carry if out_carry else find_output_bit(lhs, rhs, "AND")
 
 print(f"Problem 2: {','.join(sorted(swapped_outputs))}")
