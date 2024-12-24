@@ -55,12 +55,6 @@ tgd XOR rvg -> z12
 tnw OR pbm -> gnj"""
 data = sample_data if cli.sample else aocd.data
 
-[initials_str, gates_str] = data.split("\n\n")
-initials = {}
-for l in initials_str.splitlines():
-    [name, value] = l.split(":")
-    initials[name] = True if value.strip() == "1" else False
-
 
 class Gate:
     def __init__(self, setup: str):
@@ -92,7 +86,18 @@ class Gate:
         raise "Bruh..."
 
 
-gates = {gate.output: gate for gate in map(Gate, gates_str.splitlines())}
+def parse_input(data: str):
+    [initials_str, gates_str] = data.split("\n\n")
+    initials = {}
+    for l in initials_str.splitlines():
+        [name, value] = l.split(":")
+        initials[name] = True if value.strip() == "1" else False
+
+    gates = {gate.output: gate for gate in map(Gate, gates_str.splitlines())}
+    return initials, gates
+
+
+initials, gates = parse_input(data)
 
 ################################################################################################
 # Problem 1
@@ -105,6 +110,115 @@ z_value = int(z_combo, 2)
 print(f"Problem 1: {z_value}")
 
 
+def find_output_bit(lhs: str, rhs: str, operation: str) -> str | None:
+    inputs = tuple(sorted((lhs, rhs, operation)))
+    for gate in gates.values():
+        gate_inputs = tuple(sorted((gate.lhs, gate.rhs, gate.operation)))
+        if gate_inputs == inputs:
+            return gate.output
+
+    return None
+
+
 ################################################################################################
 # Problem 2
-# print(f"Problem 1: {",".join(sorted(find_maximum_network()))}")
+# We reproduce the whole logic of adding two numbers in binary and hope that the program was
+# initially using the same algorithm. Then we fix the gates on the way
+#
+#  See here for all details: https://en.wikipedia.org/wiki/Adder_(electronics)#Full_adder
+#
+# Adding two bits is just a sequence of operations that ends up in two output bits of the result
+#   - the most significant bit (called sum bit)
+#   - the least significant bit (called carry bit)
+# Here we additionally receive the output of the the last add, aka the carry
+# The actual addition happens as follows:
+#   - lhs                XOR  rhs            ->  interim_sum
+#   - lhs                AND  rhs            ->  interim_carry
+#   - carry              AND  interim_sum    ->  interim_sum_carry
+#   - carry              XOR  interim_sum    ->  out_sum
+#   - interim_sum_carry  OR   interim_carry  ->  out_carry
+def add_bits(
+    lhs: str, rhs: str, carry: str, swapped_outputs: list[str]
+) -> tuple[str | None, str | None]:
+
+    # Note: When adding bits to swapped_outputs we don't actually pair them up
+    #       as we don't care about the order in the end
+    # Note: We assume all over the place that the program in question actually
+    #       follows this implementation and bits are only swapped once, otherwise
+    #       everything here is broken
+
+    # find the output bits for these operations
+    interim_sum = find_output_bit(lhs, rhs, "XOR")
+    interim_carry = find_output_bit(lhs, rhs, "AND")
+
+    # if either of these is None we are fucked ig, because this program can't add
+    # two numbers without changing instructions
+    if interim_sum is None or interim_carry is None:
+        raise "Bruh..."
+
+    if carry is None:
+        # without a carry input we have to do no more work
+        return interim_sum, interim_carry
+    else:
+        interim_sum_carry = find_output_bit(carry, interim_sum, "AND")
+        if interim_sum_carry is None:
+            # can't find output bit, must be swapped
+            interim_sum, interim_carry = interim_carry, interim_sum
+            interim_sum_carry = find_output_bit(carry, interim_sum, "AND")
+
+            swapped_outputs.append(interim_sum)
+            swapped_outputs.append(interim_carry)
+
+        # we swapped the output bits earlier, so this has to be found, otherwise
+        # we would have to double-swap the same bits
+        out_sum = find_output_bit(carry, interim_sum, "XOR")
+
+        # the final sum has to be written into a z-bit, otherwise it would
+        # not contribute correctly to the final sum. so we make sure none
+        # of the intermediate results are written into a z-bit
+        if interim_sum[0] == "z":
+            interim_sum, out_sum = out_sum, interim_sum
+            swapped_outputs.append(interim_sum)
+            swapped_outputs.append(out_sum)
+        elif interim_carry[0] == "z":
+            interim_carry, out_sum = out_sum, interim_carry
+            swapped_outputs.append(interim_carry)
+            swapped_outputs.append(out_sum)
+        elif interim_sum_carry[0] == "z":
+            interim_sum_carry, out_sum = out_sum, interim_sum_carry
+            swapped_outputs.append(interim_sum_carry)
+            swapped_outputs.append(out_sum)
+
+        # again, we were swapping already so we have to find this, otherwise
+        # the program must be ill-formed
+        out_carry = find_output_bit(interim_sum_carry, interim_carry, "OR")
+
+        # make sure we are not writing the carry result into a z-bit, we should be
+        # writing the out_sum into a z-bit
+        if out_carry[0] == "z":
+            out_carry, out_sum = out_sum, out_carry
+            swapped_outputs.append(out_carry)
+            swapped_outputs.append(out_sum)
+
+        return out_sum, out_carry
+
+
+x_names = list(reversed(sorted(filter(lambda x: x[0] == "x", initials.keys()))))
+y_names = list(reversed(sorted(filter(lambda x: x[0] == "x", initials.keys()))))
+max_bits_xy = int(x_names[0][1:])
+max_bits_z = int(z_names[0][1:])
+
+in_carry = None
+swapped_outputs = []
+for i in range(max_bits_xy):
+    # get the ith bits
+    lhs = f"x{i:02d}"
+    rhs = f"y{i:02d}"
+
+    # add these two bits and carry bit from last add
+    out_sum, out_carry = add_bits(lhs, rhs, in_carry, swapped_outputs)
+
+    # update carry
+    in_carry = out_carry if out_carry else find_output_bit(lhs, rhs, "AND")
+
+print(f"Problem 2: {','.join(sorted(swapped_outputs))}")
