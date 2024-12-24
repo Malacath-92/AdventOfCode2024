@@ -127,10 +127,14 @@ def find_output_bit(lhs: str, rhs: str, operation: str) -> str | None:
 #
 #  See here for all details: https://en.wikipedia.org/wiki/Adder_(electronics)#Full_adder
 #
-# Adding two bits is just a sequence of operations that ends up in two output bits of the result
-#   - the most significant bit (called sum bit)
-#   - the least significant bit (called carry bit)
-# Here we additionally receive the output of the the last add, aka the carry
+# This function adds three bits and is just a sequence of operations that ends up in two output
+# bits as the result:
+#   - the sum bit, which is the result of adding the three bits
+#   - the carry bit, which is the overflow that has to be carried to the next addition
+#
+# The tree bits we add are the ith bits of x and y (lhs and rhs in code) and the carry from the
+# last three bit add.
+#
 # The actual addition happens as follows:
 #   - lhs                XOR  rhs            ->  interim_sum
 #   - lhs                AND  rhs            ->  interim_carry
